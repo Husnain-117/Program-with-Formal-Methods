@@ -35,8 +35,10 @@ class SSAConverter:
     def handle_assignment(self, stmt):
         """Handle assignment statement."""
         _, var, expr = stmt
-        new_var = self.new_version(var)
+        # First transform the expression using current variable versions
         new_expr = self.transform_expr(expr)
+        # Then create a new version of the variable
+        new_var = self.new_version(var)
         self.ssa.append((new_var, '=', new_expr))
 
     def handle_if(self, stmt):
@@ -94,13 +96,17 @@ def format_ssa_output(ssa_list):
         return str(expr)
 
     output = []
+    indent = 0
     for stmt in ssa_list:
         if isinstance(stmt, tuple):
             if stmt[0] == 'if':
-                output.append(f"if {format_expr(stmt[1])}")
+                output.append("  " * indent + f"if {format_expr(stmt[1])}")
+                indent += 1
             elif stmt[0] == 'assert':
-                output.append(f"assert({format_expr(stmt[1])})")
+                output.append("  " * indent + f"assert({format_expr(stmt[1])})")
             else:
                 var, op, rhs = stmt
-                output.append(f"{var} := {format_expr(rhs)}")
+                output.append("  " * indent + f"{var} := {format_expr(rhs)}")
+        if stmt[0] != 'if' and indent > 0:
+            indent -= 1
     return "\n".join(output)

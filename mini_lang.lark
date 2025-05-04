@@ -7,15 +7,28 @@
           | assert_stmt
           | block
 
+// Assignment: variable := expression (used for standalone assignments)
 assignment: VAR ":=" expr ";"
+
+// Assignment for for loop: variable := expression (no semicolon)
+for_assignment: VAR ":=" expr
+
+// Assertion: assert(condition)
 assert_stmt: "assert" "(" condition ")" ";"
 
+// If statement: if (condition) { statements } [else { statements }]
 if_statement: "if" "(" condition ")" block ["else" block]
-while_loop: "while" "(" condition ")" block
-for_loop: "for" "(" assignment condition ";" assignment ")" block
 
+// While loop: while (condition) { statements }
+while_loop: "while" "(" condition ")" block
+
+// For loop: for (init; condition; update) { statements }
+for_loop: "for" "(" for_assignment ";" condition ";" for_assignment ")" block
+
+// Block: { statements }
 block: "{" statement+ "}"
 
+// Expression: arithmetic operations
 ?expr: term
      | expr "+" term   -> add
      | expr "-" term   -> sub
@@ -28,6 +41,7 @@ block: "{" statement+ "}"
        | VAR    -> var
        | "(" expr ")"
 
+// Condition: expression comparator expression
 ?condition: expr comparator expr
 
 ?comparator: COMP

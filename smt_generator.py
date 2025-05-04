@@ -280,7 +280,7 @@ def check_program_equivalence(ssa1, ssa2):
                 
                 result += "\n\nProgram 2:\n"
                 result += f"Assertion: {format_condition(assert2)}\n"
-                result += f"Under condition: {format_condition(cond2)}\n"
+                f"Under condition: {format_condition(cond2)}\n"
                 result += "\n".join(f"{var} = {val}" for var, val in prog2_vals.items())
                 
                 return result
