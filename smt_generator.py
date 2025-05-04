@@ -2,17 +2,19 @@
 from z3 import *
 
 class SMTGenerator:
-    def __init__(self, ssa_code):
+    def __init__(self, ssa_code, var_prefix=""):
         self.ssa_code = ssa_code if isinstance(ssa_code, list) else [ssa_code]
         self.solver = Solver()
         self.vars = {}
         self.path_condition = True
         self.constraints = []
+        self.var_prefix = var_prefix
 
     def get_var(self, name):
         """Get or create a Z3 variable."""
         if name not in self.vars:
-            self.vars[name] = Int(name)
+            # prefix to avoid name collisions across programs
+            self.vars[name] = Int(f"{self.var_prefix}{name}")
         return self.vars[name]
 
     def expr_to_z3(self, expr):
@@ -90,8 +92,9 @@ class SMTGenerator:
         """Get the final version of each variable."""
         final_versions = {}
         for stmt in self.ssa_code:
-            if isinstance(stmt, tuple) and stmt[0] == 'assign':
-                var = stmt[1]
+            # detect SSA assignments: (var_name, '=', expr)
+            if isinstance(stmt, tuple) and len(stmt) == 3 and stmt[1] == '=':
+                var = stmt[0]
                 base_var = var.split('_')[0]
                 final_versions[base_var] = var
         return final_versions
@@ -143,9 +146,9 @@ def var_from_stmt(stmt):
 def check_program_equivalence(ssa1, ssa2):
     """Check if two programs in SSA form are equivalent by comparing their outputs under all conditions."""
     try:
-        # Create SMT solvers for both programs
-        smt1 = SMTGenerator(ssa1)
-        smt2 = SMTGenerator(ssa2)
+        # Create SMT solvers with distinct variable prefixes
+        smt1 = SMTGenerator(ssa1, var_prefix="p1_")
+        smt2 = SMTGenerator(ssa2, var_prefix="p2_")
         
         # Convert to SMT constraints
         smt1.to_smt()
