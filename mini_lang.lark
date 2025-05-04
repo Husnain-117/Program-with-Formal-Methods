@@ -1,0 +1,40 @@
+?start: statement+
+
+?statement: assignment
+          | if_statement
+          | while_loop
+          | for_loop
+          | assert_stmt
+          | block
+
+assignment: VAR ":=" expr ";"
+assert_stmt: "assert" "(" condition ")" ";"
+
+if_statement: "if" "(" condition ")" block ["else" block]
+while_loop: "while" "(" condition ")" block
+for_loop: "for" "(" assignment condition ";" assignment ")" block
+
+block: "{" statement+ "}"
+
+?expr: term
+     | expr "+" term   -> add
+     | expr "-" term   -> sub
+
+?term: factor
+     | term "*" factor -> mul
+     | term "/" factor -> div
+
+?factor: NUMBER -> number
+       | VAR    -> var
+       | "(" expr ")"
+
+?condition: expr comparator expr
+
+?comparator: COMP
+COMP: "==" | "!=" | "<" | "<=" | ">" | ">="
+
+VAR: /[a-zA-Z_][a-zA-Z0-9_]*/
+NUMBER: /[0-9]+/
+
+%ignore /[ \t\r\n]+/
+%ignore /\/\/[^\n]*/   // single line comment
