@@ -1,0 +1,60 @@
+# =========================
+# Verification Samples
+# =========================
+
+# --- Sample 1: Simple arithmetic and assertion (should pass) ---
+x := 2;
+y := 3;
+z := x + y;
+assert(z == 5);
+
+# --- Sample 2: If statement and assertion (should pass) ---
+a := 10;
+b := 5;
+if (a > b) {
+    c := a - b;
+}
+assert(c == 5);
+
+# --- Sample 3: Loop unrolling and assertion (should pass if unrolled 3 times) ---
+x := 0;
+for (i := 0; i < 3; i := i + 1) {
+    x := x + 2;
+}
+assert(x == 6);
+
+# =========================
+# Equivalence Checking Samples
+# =========================
+
+# --- Pair 1: Equivalent programs (addition order) ---
+# Program 1
+x := 1;
+y := 2;
+z := x + y;
+assert(z == 3);
+
+# Program 2
+y := 2;
+x := 1;
+z := y + x;
+assert(z == 3);
+
+# --- Pair 2: Non-equivalent programs (different logic) ---
+# Program 1
+x := 4;
+y := 2;
+z := x * y;
+assert(z == 8);
+
+# Program 2
+x := 4;
+y := 2;
+z := x + y;
+assert(z == 6);
+
+# =========================
+# How to use these samples
+# =========================
+# - For verification: Copy a single program into the "Input Program" box and click "Parse & Analyze".
+# - For equivalence: Copy each program of a pair into the two boxes in the "Equivalence Check" tab. 
