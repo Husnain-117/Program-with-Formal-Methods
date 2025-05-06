@@ -1,7 +1,8 @@
 import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
+from tkinter import ttk, scrolledtext, messagebox, simpledialog
 from parser import parse_and_transform, SSAConverter, format_ssa_output, parser, EXAMPLE_PROGRAM, EXAMPLE_PROGRAM_2, check_program_equivalence
 from smt_generator import SMTGenerator
+from loop_unroller import unroll_loops, format_unrolled_code
 
 class MiniLangGUI:
     def __init__(self, root):
@@ -38,16 +39,18 @@ class MiniLangGUI:
         btn_frame = ttk.Frame(frame)
         btn_frame.pack(fill='x', padx=5, pady=5)
         ttk.Button(btn_frame, text="Parse & Analyze", command=self.analyze_program).pack(side='left', padx=2)
+        ttk.Button(btn_frame, text="Unroll Loops", command=self.unroll_loops_gui).pack(side='left', padx=2)
         ttk.Button(btn_frame, text="Clear", command=lambda: self.input_text.delete('1.0', tk.END)).pack(side='left', padx=2)
 
         # Output tabs
         self.analysis_tabs = ttk.Notebook(frame)
         self.analysis_tabs.pack(fill='both', expand=True, padx=5, pady=5)
 
-        self.tab_parse_tree = self._add_output_tab(self.analysis_tabs, "Parse Tree")
-        self.tab_ast = self._add_output_tab(self.analysis_tabs, "AST")
-        self.tab_ssa = self._add_output_tab(self.analysis_tabs, "SSA")
-        self.tab_smt = self._add_output_tab(self.analysis_tabs, "SMT Verification")
+        self.tab_parse_tree, self.text_parse_tree = self._add_output_tab(self.analysis_tabs, "Parse Tree")
+        self.tab_ast, self.text_ast = self._add_output_tab(self.analysis_tabs, "AST")
+        self.tab_ssa, self.text_ssa = self._add_output_tab(self.analysis_tabs, "SSA")
+        self.tab_smt, self.text_smt = self._add_output_tab(self.analysis_tabs, "SMT Verification")
+        self.tab_unroll, self.text_unroll = self._add_output_tab(self.analysis_tabs, "Unrolled Code")
 
     def setup_equiv_tab(self):
         frame = self.tab_equiv
@@ -83,7 +86,7 @@ class MiniLangGUI:
         text = scrolledtext.ScrolledText(frame, font=("Consolas", 12), state='disabled')
         text.pack(fill='both', expand=True)
         notebook.add(frame, text=title)
-        return text
+        return frame, text
 
     def analyze_program(self):
         code = self.input_text.get('1.0', tk.END).strip()
@@ -120,10 +123,10 @@ class MiniLangGUI:
         except Exception as e:
             smt_str = f"SMT Error:\n{e}"
 
-        self._set_output(self.tab_parse_tree, parse_tree_str)
-        self._set_output(self.tab_ast, ast_str)
-        self._set_output(self.tab_ssa, ssa_str)
-        self._set_output(self.tab_smt, smt_str)
+        self._set_output(self.text_parse_tree, parse_tree_str)
+        self._set_output(self.text_ast, ast_str)
+        self._set_output(self.text_ssa, ssa_str)
+        self._set_output(self.text_smt, smt_str)
 
     def check_equivalence(self):
         prog1 = self.input_prog1.get('1.0', tk.END).strip()
@@ -140,6 +143,24 @@ class MiniLangGUI:
         except Exception as e:
             result = f"Equivalence Error:\n{e}"
         self._set_output(self.equiv_output, result)
+
+    def unroll_loops_gui(self):
+        code = self.input_text.get('1.0', tk.END).strip()
+        if not code:
+            messagebox.showwarning("Input Required", "Please enter a program.")
+            return
+        try:
+            ast = parse_and_transform(code)
+            bound = simpledialog.askinteger("Unroll Bound", "How many times to unroll loops?", initialvalue=3, minvalue=1, maxvalue=20)
+            if not bound:
+                return
+            unrolled_ast = unroll_loops(ast, unroll_bound=bound)
+            unrolled_code = format_unrolled_code(unrolled_ast)
+            self._set_output(self.text_unroll, unrolled_code)
+            self.analysis_tabs.select(self.tab_unroll)
+        except Exception as e:
+            self._set_output(self.text_unroll, f"Unroll Error:\n{e}")
+            self.analysis_tabs.select(self.tab_unroll)
 
     def _set_output(self, widget, text):
         widget.config(state='normal')
